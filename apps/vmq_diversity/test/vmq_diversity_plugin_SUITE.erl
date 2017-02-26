@@ -28,10 +28,9 @@
 %% ===================================================================
 init_per_suite(_Config) ->
     application:load(vmq_plugin),
-    ok = file:write_file("vmq_plugin.conf", <<"{plugins, []}.">>),
     application:ensure_all_started(vmq_plugin),
     vmq_plugin_mgr:enable_plugin(vmq_diversity),
-    {ok, _} = vmq_diversity:load_script("../../../../test/plugin_test.lua"),
+    {ok, _} = vmq_diversity:load_script(code:lib_dir(vmq_diversity) ++ "/test/plugin_test.lua"),
     cover:start(),
     _Config.
 
@@ -46,7 +45,6 @@ init_per_testcase(_Case, Config) ->
 end_per_testcase(_, Config) ->
     Config.
 
--ifdef('DO_TEST').
 all() ->
     [auth_on_register_test,
      auth_on_publish_test,
@@ -62,9 +60,6 @@ all() ->
      on_client_gone_test,
      auth_on_register_undefined_creds_test
     ].
--else.
-all() -> [].
--endif.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Actual Tests
@@ -76,7 +71,7 @@ auth_on_register_test(_) ->
                       [peer(), not_allowed_subscriber_id(), username(), password(), true]),
     {error, [next]} = vmq_plugin:all_till_ok(auth_on_register,
                       [peer(), ignored_subscriber_id(), username(), password(), true]),
-    {ok, [{mountpoint, "mynewmount"}]} = vmq_plugin:all_till_ok(auth_on_register,
+    {ok, [{subscriber_id, {"override-mountpoint", <<"override-client-id">>}}]} = vmq_plugin:all_till_ok(auth_on_register,
                       [peer(), changed_subscriber_id(), username(), password(), true]).
 
 auth_on_publish_test(_) ->
